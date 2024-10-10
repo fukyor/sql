@@ -1,0 +1,59 @@
+create database SuperMarket;
+
+use SuperMarket;
+create table student(
+    SNO VARCHAR(20) PRIMARY KEY ,
+    WeiXin VARCHAR(20) ,
+    SName VARCHAR(10),
+    BrithYear YEAR,
+    Gender char(10),
+    College char(10),
+    Major char(10),
+    constraint uni_wx unique (WeiXin)
+);
+
+create table Category(
+    CategoryNO char(20) PRIMARY KEY,
+    CategoryName char(20),
+    Descriptions varchar(50)
+);
+
+create table Supplier(
+    SupplierNO char(10) PRIMARY KEY,
+    SupplierName varchar(20),
+    Address varchar(30),
+    Number char(20)
+);
+
+create table Goods(
+    GoodsNO char(10) primary key ,
+    SupplierNO char(10),
+    CtegoryNO char(10),
+    GoodsNmae varchar(20),
+    InPrice double,
+    SalePrice double,
+    Number int,
+    ProductTime Date,
+    constraint fk1 foreign key (SupplierNO) references Category(CategoryNO)
+)
+
+create table Salebill (
+    GoodsNO char(20),
+    SNO CHAR(10),
+    HappenTime date,
+    Number int,
+    constraint fk2 foreign key (GoodsNO) REFERENCES  Goods(GoodsNO),
+    constraint fk3 foreign key (SNO) REFERENCES student(SNO),
+    primary key (GoodsNO, SNO)
+)
+
+ALTER TABLE Goods add QGperiod int;
+alter table student drop BrithYear;
+alter table Salebill add constraint chk_quantity_positive check ( Number > 0 );
+alter table student drop constraint uni_wx;
+alter table Goods modify InPrice decimal(10,1);
+alter table Salebill drop constraint chk_quantity_positive;
+alter table Salebill add constraint chk_quantity_range check ( Number > 0 and Number < 100 );
+ALTER TABLE Supplier ADD UNIQUE INDEX uq_Supplier_no (SupplierNO);
+alter table Category add unique index index_category_unique (CategoryNO asc , CategoryName desc );
+alter table Supplier drop index uq_Supplier_no;
