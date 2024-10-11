@@ -1,0 +1,83 @@
+use supermarket;
+
+INSERT INTO goods (GoodsNO, SupplierNO, CtegoryNO, GoodsNmae, InPrice, SalePrice, Number, ProductTime)
+VALUES
+('GN0002', 'Sup002', 'CN001', '雀巢咖啡', 4.0, 5.8, 50, '2017-06-08');
+
+update goods set GoodsNmae='雀巢咖啡条装' where GoodsNmae='雀巢咖啡';
+
+update goods set SalePrice=SalePrice*1.05;
+
+# 修改category表中类别号“CN005”为“CN004”
+#update category set CategoryNO='CN004' where CategoryNO='CN005';
+# 5. 将2020年销售数量小于3的商品，售价打8折。
+#select goods.GoodsNmae, goods.SalePrice from  goods where goods.Number<3;
+update goods set SalePrice=0.8*SalePrice where  goods.Number<3;
+
+#6. 把供应商“久润食品”供应的商品数量清零。
+select SupplierNO from supplier where SupplierName='久润食品';
+update goods set Number=0 where SupplierNO=(select SupplierNO from supplier where SupplierName='久润食品');
+
+#show columns from student;
+# 7. 删除购买“优乐美奶茶”，但购买数量低于3的销售记录。
+select GoodsNO, SNO from salebill where Number<3;
+delete from salebill where Number<3;
+
+# INSERT INTO student (SNO, SName, Gender, College, Major, WeiXin)
+# VALUES
+# ('S01', '李明', '男', 'CS', 'IT', 'wx001'),
+# ('S02', '徐好', '女', 'CS', 'MIS', 'wx002'),
+# ('S03', '伍民', '男', 'CS', 'MIS', 'wx003'),
+# ('S04', '闫红',  '女', 'ACC', 'AC', 'wx004'),
+# ('S05', '张小红',  '女', 'ACC', 'AC', 'wx005');
+#
+# INSERT INTO salebill (GoodsNO, SNO, HappenTime, Number)
+# VALUES
+# ('GN0001', 'S01', '2020-06-09', 3),
+# ('GN0001', 'S02', '2020-05-03', 1),
+# ('GN0001', 'S03', '2020-04-07', 1),
+# ('GN0002', 'S02', '2018-05-08', 2),
+# ('GN0002', 'S05', '2019-06-26', 2),
+# ('GN0005', 'S05', '2020-06-01', 1);
+
+#8.删除生产日期在2018年前的商品信息
+#select goods.ProductTime from goods where ProductTime<'2018-01-01';
+ DELETE FROM goods WHERE ProductTime < '2018-01-01';
+
+# 9.删除“卡夫食品”供应商供应的所有商品的销售记录。
+select salebill.GoodsNO from salebill join supermarket.goods g on salebill.GoodsNO = g.GoodsNO join supermarket.supplier s on g.SupplierNO = s.SupplierNO;
+#你不能在子查询中引用你要更新或删除的表，所以下面的语句是错误的,同时goodsNO可能有多个，不能使用=
+delete from salebill where GoodsNO=(select salebill.GoodsNO from salebill
+    join supermarket.goods g on salebill.GoodsNO = g.GoodsNO
+    join supermarket.supplier s on g.SupplierNO = s.SupplierNO
+                                                            where s.SupplierName='卡夫食品'
+);
+#正确语句
+delete from salebill where GoodsNO in (select g.GoodsNO from goods g
+                                                        where g.SupplierNO in (select s.SupplierNO
+                                                                               from supplier s
+                                                                               where s.SupplierName = '卡夫食品'));
+
+# 10.删除“ACC”学院所有学生的销售记录。
+select st.SNO from student st where st.College='ACC'
+delete from salebill s where s.SNO in (select st.SNO from student st where st.College='ACC');
+
+# 11. 删除goods表和salebill表中的所有数据，注意根据表之间的关系书写删除顺序。
+# 因为salebill中有goods的外键，所以先删salebill
+DELETE FROM salebill;
+DELETE FROM goods;
+
+#12. 删除1997年以前出生的学生信息。
+#alter table student add column BirthYear year NULL;
+# UPDATE student
+# SET BirthYear = CASE SName
+#     WHEN '李明' THEN 1999
+#     WHEN '徐好' THEN 1998
+#     WHEN '伍民' THEN 1996
+#     WHEN '闫红' THEN 1997
+#     WHEN '张小红' THEN 1997
+# END
+# WHERE SName IN ('李明', '徐好', '伍民', '闫红', '张小红');
+delete from student where BirthYear<'1997';
+
+
