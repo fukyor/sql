@@ -1,0 +1,188 @@
+use supermarket;
+
+
+#1.  查询全部商品信息。
+select *from supermarket.goods;
+
+#2．查询类别为“cn002”的所有商品信息。
+ select * from supermarket.goods where categoryno='cn002';
+
+#3. 查询类别为“cn001”和“cn002”对应的所有商品信息。
+select * from supermarket.goods where categoryno='cn002' or categoryno='cn001';
+
+#4．查询类别为“cn005”且进价大于20的商品信息。
+select * from supermarket.goods where categoryno='cn005' and inprice>20;
+
+#5．查询库存数量小于10的商品号，供应商号，商品名和数量。
+SELECT goodsno, supplierno, goodsname, number
+FROM supermarket.goods
+WHERE number < 10;
+
+# 6．查询有购买记录学生的学号。
+select distinct sno from salebill;
+
+
+# 7．查询计算机专业“IT”学生的学号，姓名和年龄
+select student.sno, student.sname, year(curdate()) - birthyear year from student where major='IT';
+# 8．查询年龄在22到24岁学生的学号，姓名，学院，专业和年龄
+select sno, student.sname,student.college,student.major,year(curdate()) - birthyear year
+from student
+where year(curdate()) - birthyear >= 22 and year(curdate()) - birthyear <= 24;
+# 9． 查询姓张的同学的学号，姓名，学院。
+use supermarket;
+SELECT sno, sname, college
+FROM student
+WHERE sname LIKE '张%';
+
+# 10．查询库存数量在20以上的商品信息，并按数量的降序排列。
+    select * from goods where goods.number > 20 order by number desc ;
+# 11．查询库存数量在10以内的商品编号、商品名称、类别号、数量，按类别升序库存数量降序排列结果。
+SELECT goodsno, goodsname, categoryno, number
+FROM goods
+WHERE number <= 10
+ORDER BY categoryno ASC, number DESC;
+
+# 12．查询库存数量排名前三的商品信息。
+# IN不能直接使用limit，所以在in中的子查询中再嵌套一个子查询
+SELECT *
+FROM goods
+WHERE number IN (
+    SELECT number FROM (
+        SELECT DISTINCT number
+        FROM goods
+        ORDER BY number asc
+        LIMIT 3
+    ) AS temp_numbers
+);
+
+# 13. 查询类别为“cn001”库存数量最大的商品，显示商品号，商品名和数量。
+select goods.goodsno, goods.goodsname, goods.number
+from  goods
+where goods.categoryno='cn001'
+order by number desc limit 1;
+
+select goods.goodsno, goods.goodsname, goods.number
+from goods
+where  goods.categoryno='cn001' and number = (select max(number) from goods);
+
+# 14．查询管理信息系统专业“MIS”的学生人数。
+select count(*) from student where major='MIS';
+# 15．按学院统计各个学院，年龄在20岁以上的学生人数。
+#使用group by时，select中只能包含group by中元素或者是聚合函数
+SELECT college ,count(*) as 人数 from student
+where  year(curdate()) - birthyear >= 20
+GROUP BY college;
+# 16．统计2018年各商品的销售总量。
+select goodsno, count(*) from salebill
+                         where year(happentime) = '2018' group by goodsno;
+
+# 17．查询学生人数在3人以上的学院及学生人数。
+SELECT college AS 学院, COUNT(*) AS 学生人数
+FROM student
+GROUP BY college
+HAVING COUNT(*) > 3;
+
+# 18．查询2019年商品购买总数量在5以上的学生的学号和购买总数。
+select sno, sum(number) from salebill
+where  year(happentime) = '2019'
+group by sno
+having sum(number) > 5;
+# 19．查询咖啡类商品的平均售价。
+select avg(goods.saleprice) from goods where goodsno=(select goodsno from  category
+                                                                     where categoryname='咖啡');
+# 20．查询与张小红同学院的学生的学号、姓名、学院。
+select student.sno, student.sname, student.college
+from student
+where college=(select college from student where sname='张小红');
+# 21．查询所有商品的销售情况，包括商品号，商品名，学生姓名，销售时间，销售数量，按销售日期降序排列。
+select goods.goodsno, goods.goodsname,student.sname, salebill.happentime, salebill.number
+from goods
+join supermarket.salebill on goods.goodsno = salebill.goodsno
+join supermarket.student on salebill.sno = student.sno
+order by happentime desc ;
+# 22．查询购买了商品的学生学号、姓名、学院。
+select distinct student.sno,sname,college from student
+join salebill on student.sno = salebill.sno;
+# 23．查询购买了咖啡类商品的学生的学号、姓名、学院。
+select distinct student.sno,sname,college from student
+join salebill on student.sno = salebill.sno
+join goods on salebill.goodsno = goods.goodsno
+join category on goods.categoryno = category.categoryno
+where categoryname='咖啡';
+
+# 24．查询没有出售过的商品号，商品名，类别名、售价和数量。（连接查询和子查询）
+select  goods.goodsno, goods.goodsname, category.categoryname, goods.saleprice, goods.number
+from goods
+left join salebill on goods.goodsno = salebill.goodsno
+join category on goods.categoryno = category.categoryno
+where salebill.goodsno is null
+
+SELECT
+    goods.goodsno AS 商品号,
+    goods.goodsname AS 商品名,
+    category.categoryname AS 类别名,
+    goods.saleprice AS 售价,
+    goods.number AS 数量
+FROM
+    goods
+JOIN
+    category ON goods.categoryno = category.categoryno
+WHERE
+    goods.goodsno NOT IN (SELECT salebill.goodsno FROM salebill);
+
+
+# 25．查询购买了商品号为“gn001”或“gn002”商品的学号，姓名和学院。
+select student.sno, student.sname, student.college
+from student
+where student.sno in (select salebill.sno
+                      from salebill
+                      where goodsno='gn001' or goodsno='gn002');
+
+# 27. 查询各学院年龄最大的学生，显示学号，姓名和学院。（相关子查询和派生表）
+SELECT
+    s.sno AS 学号,
+    s.sname AS 姓名,
+    s.college AS 学院
+FROM
+    student s
+JOIN (
+    SELECT
+        college,
+        MIN(birthyear) AS max_birthyear
+    FROM
+        student
+    GROUP BY
+        college
+) AS max_age ON s.college = max_age.college
+AND s.birthyear = max_age.max_birthyear;
+
+# 28. 统计每个商品的销售总数，要求显示商品号，商品名和销售总数。
+SELECT
+    goods.goodsno AS 商品号,
+    goods.goodsname AS 商品名,
+    SUM(salebill.number) AS 销售总数
+FROM
+    goods
+LEFT JOIN
+    salebill ON goods.goodsno = salebill.goodsno
+GROUP BY
+    goods.goodsno, goods.goodsname;
+
+
+# 29. 查询2019年商品购买总数在5以上的学生的姓名、学院和购买总数。
+select student.sname, student.college, sum(salebill.number)
+from student
+join salebill
+on student.sno = salebill.sno
+where year(happentime) = '2019'
+group by student.sname, student.college
+having sum(salebill.number) > 5;
+
+# 30. 找出供应商品总数在50以上的供应商号，供应商名，供应商地址，供应总数，并按供应总数的降序排列。
+select supplier.supplierno, supplier.suppliername, supplier.address, sum(goods.number)
+from goods
+right join supplier
+on goods.supplierno = supplier.supplierno
+group by supplier.supplierno, supplier.suppliername, supplier.address
+having sum(goods.number) > 50
+order by sum(goods.number) desc ;
