@@ -1,0 +1,120 @@
+use supermarket;
+
+#drop view V_COM;
+create view V_COM as
+select count(*) as 人数,avg(year(curdate()) - birthyear) as avg_age, college
+from student
+group by student.college;
+
+CREATE VIEW V_SSG AS
+SELECT
+    s.SNO,
+    s.SName,
+    g.goodsname,
+    g.SalePrice,
+    sb.Number AS SaleQuantity
+FROM
+    student s
+JOIN
+    salebill sb ON s.SNO = sb.SNO
+JOIN
+    goods g ON sb.GoodsNO = g.GoodsNO;
+
+
+# DROP VIEW IF EXISTS V_AGE;
+CREATE VIEW V_AGE AS
+SELECT
+    SNO,
+    SName,
+    Gender,
+    College,
+    Major,
+    birthyear,
+    (year(curdate()) - birthyear) AS Age  -- 手动计算年龄
+FROM
+    student;
+
+select  * from V_AGE;
+
+create view V_COM as
+select count(*) as 人数,avg(year(curdate()) - birthyear) as avg_age, major
+from student
+group by student.major;
+
+CREATE VIEW V_S_CONSUME AS
+SELECT
+    s.SNO,
+    s.SName,
+    COUNT(DISTINCT sb.GoodsNO) AS GoodsTypeCount,
+    SUM(sb.Number * g.SalePrice) AS TotalConsume
+FROM
+    student s
+JOIN
+    salebill sb ON s.SNO = sb.SNO
+JOIN
+    goods g ON sb.GoodsNO = g.GoodsNO
+GROUP BY
+    s.SNO, s.SName;
+
+CREATE VIEW V_GOODS AS
+SELECT
+    c.CategoryName,
+    COUNT(*) AS TotalGoods,
+    AVG(g.SalePrice) AS AveragePrice,
+    MIN(g.Number) AS MinStock
+FROM
+    goods g
+JOIN
+    category c ON g.categoryno = c.CategoryNO
+GROUP BY
+    c.CategoryName;
+
+CREATE VIEW V_SU_GOOD AS
+SELECT
+    s.SupplierName,
+    COUNT(g.GoodsNO) AS TotalGoods,
+    SUM(g.Number) AS TotalStock,
+    AVG(g.InPrice) AS AverageInPrice
+FROM
+    goods g
+JOIN
+    supplier s ON g.SupplierNO = s.SupplierNO
+GROUP BY
+    s.SupplierName
+HAVING
+    AVG(g.InPrice) > 10;
+
+SELECT college
+FROM V_COM
+where V_COM.avg_age > 19;
+
+SELECT *
+FROM V_S_CONSUME
+WHERE TotalConsume > 200;
+
+select SupplierName, supplier.number, supplier.address
+from supplier
+where suppliername in
+(SELECT SupplierName
+FROM V_SU_GOOD
+WHERE TotalStock < 50);
+
+INSERT INTO V_MIS (SNO, SName, birthyear, College, Major, WeiXin)
+VALUES ('s10', '周瑜', '1999', 'CS', 'IT', 'wx010');
+select  * from V_MIS;
+
+update V_MIS set  V_MIS.sname='李欢欢' where V_MIS.sno='s01';
+SELECT * FROM V_MIS;
+
+update V_MIS set sname='徐慧慧' where sno='s02';
+SELECT * FROM student;
+
+update V_SSG set SalePrice='10' where V_SSG.goodsname='力神咖啡';
+select * from goods;
+
+delete from V_MIS where V_MIS.sno='s09';
+select * from student;
+
+delete from V_MIS where V_MIS.sno='s10';
+select * from student;
+
